@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Music Player</title>
+  <style>
+    /* Global styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* Music Player styles */
+    #playerContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background-color: #212121;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      margin: 0 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .button:hover {
+      background-color: #333333;
+    }
+
+    #timelineContainer {
+      width: 100%;
+      height: 6px;
+      background-color: #e0e0e0;
+      margin-top: 10px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    #timelineProgress {
+      width: 0;
+      height: 100%;
+      background-color: #2196F3;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    #currentTime {
+      font-size: 14px;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      color: #2196F3;
+    }
+
+    #currentTime::before {
+      content: "";
+      width: 60%;
+      height: 2px;
+      background-color: #888888;
+      margin-right: 10px;
+    }
+
+    #currentSongTitle {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    /* Library styles */
+    #libraryContainer {
+      margin-bottom: 20px;
+    }
+
+    .songListItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #ffffff;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .songListItem:hover {
+      background-color: #f2f2f2;
+    }
+
+    .songImage img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .songTitle {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .songLength {
+      font-size: 12px;
+      color: #888888;
+    }
+
+    .removeButton {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background-color: transparent;
+      color: #888888;
+      font-size: 12px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: color 0.3s ease;
+      padding: 0;
+    }
+
+    .removeButton:hover {
+      color: #ff0000;
+    }
+
+    /* File input styles */
+    #uploadContainer {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    #uploadInput {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .uploadButton {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #2196F3;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .uploadButton:hover {
+      background-color: #0d8beb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Music Player</h1>
+
+  <div id="uploadContainer">
+    <label for="uploadInput" class="uploadButton">Choose Files</label>
+    <input type="file" id="uploadInput" accept="audio/*" multiple>
+  </div>
+
+  <div id="playerContainer">
+    <div id="playerControls">
+      <button id="playButton" class="button">▶</button>
+      <button id="pauseButton" class="button">II</button>
+    </div>
+    <br>
+    <div id="currentSongTitle"></div>
+    <div id="timelineContainer">
+      <div id="timelineProgress"></div>
+    </div>
+    <div id="currentTime">0:00</div>
+  </div>
+
+  <div id="libraryContainer">
+    <h2>Library</h2>
+    <div id="songList"></div>
+  </div>
+
+  <script>
+    // Music Player logic
+    const audio = new Audio();
+    let isPlaying = false;
+    let currentSongIndex = 0;
+    let currentTime = 0;
+    let songList = [];
+
+    function playSong() {
+      audio.play();
+      isPlaying = true;
+    }
+
+    function pauseSong() {
+      audio.pause();
+      isPlaying = false;
+    }
+
+    function loadSong() {
+      const currentSong = songList[currentSongIndex];
+      audio.src = currentSong.url;
+      audio.addEventListener("loadedmetadata", () => {
+        updateTime();
+      });
+      document.getElementById("currentSongTitle").textContent = currentSong.title;
+    }
+
+    function updateTime() {
+      const duration = audio.duration;
+      const progress = (currentTime / duration) * 100;
+      document.getElementById("timelineProgress").style.width = `${progress}%`;
+
+      const minutes = Math.floor(duration / 60);
+      const seconds = Math.floor(duration % 60);
+      document.getElementById("currentTime").textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
+
+    // Handle play button click
+    document.getElementById("playButton").addEventListener("click", () => {
+      playSong();
+    });
+
+    // Handle pause button click
+    document.getElementById("pauseButton").addEventListener("click", () => {
+      pauseSong();
+    });
+
+    // Handle timeline click
+    document.getElementById("timelineContainer").addEventListener("click", (event) => {
+      const { offsetX, target } = event;
+      const timelineWidth = target.clientWidth;
+      const clickPercentage = offsetX / timelineWidth;
+      const currentTime = audio.duration * clickPercentage;
+      audio.currentTime = currentTime;
+    });
+
+    // Handle file input change
+    document.getElementById("uploadInput").addEventListener("change", (event) => {
+      const files = event.target.files;
+      for (const file of files) {
+        const songURL = URL.createObjectURL(file);
+        const song = {
+          title: file.name,
+          url: songURL
+        };
+        songList.push(song);
+        const songListItem = document.createElement("div");
+        songListItem.classList.add("songListItem");
+        songListItem.innerHTML = `
+          <div class="songImage">
+            <img src="music_note.png" alt="Music Note">
+          </div>
+          <div class="songTitle">${song.title}</div>
+          <div class="songLength">${song.length}</div>
+          <button class="removeButton">X</button>
+        `;
+        songListItem.addEventListener("click", () => {
+          currentSongIndex = songList.indexOf(song);
+          loadSong();
+          playSong();
+        });
+        songListItem.querySelector(".removeButton").addEventListener("click", (event) => {
+          event.stopPropagation();
+          const index = songList.indexOf(song);
+          if (index > -1) {
+            songList.splice(index, 1);
+          }
+          songListItem.remove();
+        });
+        document.getElementById("songList").appendChild(songListItem);
+      }
+    });
+
+    // Update timeline progress
+    audio.addEventListener("timeupdate", () => {
+      currentTime = audio.currentTime;
+      updateTime();
+    });
+
+    // Load the first song if available
+    if (songList.length > 0) {
+      loadSong();
+    }
+  </script>
+</body>
+</html>
